@@ -1,0 +1,39 @@
+name: Build Nexas Safe APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'NexasSafe-Android-Source.zip'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract Android project
+        run: |
+          unzip -o NexasSafe-Android-Source.zip -d project
+          find project -name gradlew -type f
+
+      - name: Build APK
+        run: |
+          chmod +x $(find project -name gradlew -type f | head -1)
+          cd "$(dirname "$(find "$GITHUB_WORKSPACE/project" -name gradlew -type f | head -1)")"
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: NexasSafe-APK
+          path: project/**/build/outputs/apk/debug/*.apk
